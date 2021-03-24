@@ -1,0 +1,121 @@
+xontrib load z
+xontrib load powerline2
+xontrib load docker_tabcomplete
+
+$EDITOR = '/usr/local/bin/vim'
+$VISUAL = '/usr/local/bin/vim'
+$INDENT = "    "
+$XONSH_AUTOPAIR = True
+$AUTO_CD = True
+$PROMPT = "{INTENSE_BLACK} [ {INTENSE_BLUE}{cwd} {INTENSE_BLACK}] {gitstatus}\n{INTENSE_GREEN}$ "
+
+"""
+$LS_COUNT = 0
+import os
+def ls_to_sl():
+    $LS_COUNT = str(int($LS_COUNT) + 1)
+
+    if $LS_COUNT== '5':
+        ![sl]
+    else:
+        ![exa --git --time-style=long-iso -gl]
+"""    
+
+# aliases
+aliases['ls'] = 'exa --git --time-style=long-iso -gla'
+aliases['ll'] = 'ls'
+aliases['la'] = 'exa --git --time-style=long-iso -gla'
+aliases['l1'] = 'exa -1'
+aliases['l'] = 'll'
+aliases['cat'] = 'bat'
+aliases['vi'] = 'vim'
+aliases['so'] = 'source'
+
+aliases['gc'] = 'git clone'
+aliases['gs'] = 'git status'
+aliases['gb'] = 'git branch'
+aliases['gmas'] = 'git checkout master'
+
+aliases['tf'] = 'terraform'
+
+aliases['do'] = 'docker'
+aliases['dc'] = 'docker-compose'
+
+aliases['pr'] = 'hub pull-request'
+
+
+import time
+
+def _jupyter_lab_by_docker(args):
+    IMAGE = 'kleinmask/jupyter-lab'
+    $(docker run -d --rm -p 8888:8888 -v /Users/klein/dev:/work @(IMAGE))
+    time.sleep(3)
+    open 'http://localhost:8888/lab'
+
+
+
+aliases['jl'] = _jupyter_lab_by_docker
+
+
+
+def _terraform_plan(args=None):
+    $(terraform plan @(args) | tee -a /dev/stderr | landscape)
+aliases['tp'] = _terraform_plan
+
+def _git_add_commit_push(args):
+    if len(args) == 1:
+        $(git add -A)
+        $(git commit -m @(args[0]))
+        ![git push origin HEAD]
+    
+aliases['gp'] = _git_add_commit_push
+
+def _set_aws_profile(args):
+    p = args[0]
+    $AWS_PROFILE = p
+    $AWS_DEFAULT_PROFILE = p
+    print('aws profile is : ', p)
+
+aliases['awsp'] = _set_aws_profile
+
+
+def _aij(args):
+    current_dir = $(pwd)
+    $(cd /Users/klein/dev/aijobcolle/docker)
+    if len(args) >= 1:
+        if args[0] == "down":
+            $(docker-compose down)
+    else:
+        $(docker-compose up -d)
+        print('jupyter : ', 'http://localhost:9999')
+        print('pgadmin : ', 'http://localhost:8080')
+
+    print(current_dir)
+    $(cd current_dir)
+
+aliases['aij'] = _aij
+
+aliases['delds'] = 'find . -name ".DS_Store" -type f -ls -delete'
+
+aliases['mdb'] = 'mongod --config /usr/local/etc/mongod.conf'
+
+aliases['t'] = 'tmux'
+
+aliases['j'] = 'z'
+
+
+def _blog(args):
+    IMAGE = 'kleinmask/pelican'
+    CONTAINER = 'kleinmask-pelican-container'
+
+    if args:
+        if args[0] == 'up':
+            ![docker exec @(CONTAINER) make html]
+        elif args[0] == 'stop':
+            ![docker stop @(CONTAINER)]
+    else:
+        ![docker run -d --rm --name @(CONTAINER) -p 8000:8000 -v /Users/klein/dev/blog:/site @(IMAGE)]
+        ![docker exec @(CONTAINER) make html]
+        print('Start My Blog !! Access is http://localhost:8000/')
+    
+aliases['blog'] = _blog
